@@ -1,9 +1,8 @@
-# Используем Ubuntu 22.04
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Установка базовых утилит и сертификатов
+# Базовые зависимости + ca-certificates для HTTPS
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -11,35 +10,31 @@ RUN apt-get update && \
         gnupg \
         software-properties-common \
         apt-transport-https \
-        x11vnc \
         xvfb \
-        fluxbox \
         pulseaudio \
         ffmpeg \
         locales && \
     rm -rf /var/lib/apt/lists/*
 
-# Добавляем архитектуру i386
+# Включаем i386
 RUN dpkg --add-architecture i386
 
-# Добавляем ключ WineHQ
-RUN wget -O /etc/apt/trusted.gpg.d/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+# Добавляем ключ и репозиторий OBS для libfaudio0
+RUN wget -O- https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_22.04/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/libfaudio-obs.gpg > /dev/null
+RUN echo "deb https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_22.04 ./ " > /etc/apt/sources.list.d/libfaudio.list
 
 # Добавляем репозиторий WineHQ
+RUN wget -O /etc/apt/trusted.gpg.d/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
 RUN echo "deb https://dl.winehq.org/wine-builds/ubuntu/ jammy main" > /etc/apt/sources.list.d/winehq.list
 
-# ⚠️ КРИТИЧЕСКИ ВАЖНО: добавляем репозиторий для libfaudio0 (требуется Wine)
+# Обновляем и устанавливаем всё вместе
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        libfaudio0:i386 && \
+    apt-get install -y --install-recommends \
+        libfaudio0:i386 \
+        winehq-stable && \
     rm -rf /var/lib/apt/lists/*
 
-# Теперь можно установить Wine
-RUN apt-get update && \
-    apt-get install -y --install-recommends winehq-stable && \
-    rm -rf /var/lib/apt/lists/*
-
-# Установка winetricks
+# winetricks
 RUN mkdir -p /opt && \
     cd /opt && \
     wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks && \
@@ -49,13 +44,11 @@ RUN mkdir -p /opt && \
 RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 
-# Рабочая директория
 WORKDIR /app
 COPY scripts/ ./scripts/
 COPY config/ ./config/
 RUN chmod +x scripts/*.sh
 
-# Пользователь
 RUN useradd --create-home --shell /bin/bash roblox
 USER roblox
 ENV HOME=/home/roblox
