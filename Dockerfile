@@ -1,31 +1,41 @@
-# Используем Ubuntu 22.04 как базу (стабильная поддержка Wine + FFmpeg)
+# Используем Ubuntu 22.04
 FROM ubuntu:22.04
 
-# Предотвращаем интерактивные запросы при установке
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Установка системных зависимостей
+# Установка базовых утилит и сертификатов
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        ca-certificates \
         wget \
         gnupg \
         software-properties-common \
+        apt-transport-https \
         x11vnc \
         xvfb \
         fluxbox \
-        alsa-utils \
         pulseaudio \
         ffmpeg \
-        git \
-        ca-certificates \
-        locales \
-        dbus-x11 && \
+        locales && \
     rm -rf /var/lib/apt/lists/*
 
-RUN dpkg --add-architecture i386 && \
-    wget -O /etc/apt/trusted.gpg.d/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
-    echo "deb https://dl.winehq.org/wine-builds/ubuntu/ jammy main" > /etc/apt/sources.list.d/winehq.list && \
-    apt-get update && \
+# Добавляем архитектуру i386
+RUN dpkg --add-architecture i386
+
+# Добавляем ключ WineHQ
+RUN wget -O /etc/apt/trusted.gpg.d/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+
+# Добавляем репозиторий WineHQ
+RUN echo "deb https://dl.winehq.org/wine-builds/ubuntu/ jammy main" > /etc/apt/sources.list.d/winehq.list
+
+# ⚠️ КРИТИЧЕСКИ ВАЖНО: добавляем репозиторий для libfaudio0 (требуется Wine)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libfaudio0:i386 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Теперь можно установить Wine
+RUN apt-get update && \
     apt-get install -y --install-recommends winehq-stable && \
     rm -rf /var/lib/apt/lists/*
 
@@ -35,25 +45,20 @@ RUN mkdir -p /opt && \
     wget https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks && \
     chmod +x winetricks
 
-# Настройка локали (важно для Wine)
+# Локаль
 RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 
-# Создание рабочей директории
+# Рабочая директория
 WORKDIR /app
-
-# Копирование скриптов и конфигов
 COPY scripts/ ./scripts/
 COPY config/ ./config/
-
-# Делаем скрипты исполняемыми
 RUN chmod +x scripts/*.sh
 
-# Создаём пользователя без root-прав (безопасность)
+# Пользователь
 RUN useradd --create-home --shell /bin/bash roblox
 USER roblox
 ENV HOME=/home/roblox
 ENV WINEPREFIX=/app/config/wine_prefix
 
-# Запуск всего через точку входа
 ENTRYPOINT ["/app/scripts/run_all.sh"]
