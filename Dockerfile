@@ -2,9 +2,14 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Включаем multiverse и universe
-RUN sed -i 's/^#\s*deb/deb/' /etc/apt/sources.list && \
-    apt-get update && \
+# Шаг 1: Включаем universe/multiverse и добавляем i386
+RUN dpkg --add-architecture i386 && \
+    sed -i 's/^deb http:\/\/archive.ubuntu.com\/ubuntu jammy main$/deb http:\/\/archive.ubuntu.com\/ubuntu jammy main universe multiverse/' /etc/apt/sources.list && \
+    sed -i 's/^deb http:\/\/archive.ubuntu.com\/ubuntu jammy-updates main$/deb http:\/\/archive.ubuntu.com\/ubuntu jammy-updates main universe multiverse/' /etc/apt/sources.list && \
+    sed -i 's/^deb http:\/\/security.ubuntu.com\/ubuntu jammy-security main$/deb http:\/\/security.ubuntu.com\/ubuntu jammy-security main universe multiverse/' /etc/apt/sources.list
+
+# Шаг 2: Устанавливаем зависимости
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         wget \
@@ -12,17 +17,14 @@ RUN sed -i 's/^#\s*deb/deb/' /etc/apt/sources.list && \
         xvfb \
         pulseaudio \
         ffmpeg \
-        locales \
-        software-properties-common && \
+        locales && \
     rm -rf /var/lib/apt/lists/*
 
-# Включаем i386
-RUN dpkg --add-architecture i386
-
-# Обновляем и ставим Wine из официального репозитория Ubuntu
+# Шаг 3: Устанавливаем wine (i386) и winetricks из официальных репозиториев
 RUN apt-get update && \
     apt-get install -y --install-recommends \
-        wine:i386 \
+        wine \
+        wine32 \
         winetricks && \
     rm -rf /var/lib/apt/lists/*
 
@@ -40,4 +42,4 @@ USER roblox
 ENV HOME=/home/roblox
 ENV WINEPREFIX=/app/config/wine_prefix
 
-ENTRYPOINT ["/app/scripts/run_all.sh"]
+ENTRYPOINT ["/app/scripts/run_all.sh"]]
