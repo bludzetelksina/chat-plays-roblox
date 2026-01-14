@@ -22,7 +22,6 @@ RUN apt-get update && \
         dbus-x11 && \
     rm -rf /var/lib/apt/lists/*
 
-# Установка WineHQ (официальный репозиторий)
 RUN dpkg --add-architecture i386 && \
     wget -O /etc/apt/trusted.gpg.d/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key && \
     echo "deb https://dl.winehq.org/wine-builds/ubuntu/ jammy main" > /etc/apt/sources.list.d/winehq.list && \
