@@ -1,0 +1,4 @@
+logs/*
+config/wine_prefix/
+.env
+*.key
