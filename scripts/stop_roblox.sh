@@ -4,59 +4,71 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR/.."
 LOGS_DIR="$ROOT_DIR/logs"
+WINEPREFIX="$ROOT_DIR/config/wine_prefix"
 PID_FILE="$LOGS_DIR/roblox.pid"
 
-# Функция: завершить процесс и его детей
+# Функция: завершить дерево процессов
 kill_tree() {
     local pid=$1
-    if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then
+    [ -z "$pid" ] && return
+    if ! kill -0 "$pid" 2>/dev/null; then
         return
     fi
 
-    # Получаем всех потомков через pgrep
+    # Убиваем потомков рекурсивно
     children=$(pgrep -P "$pid" 2>/dev/null || true)
-    
-    # Рекурсивно убиваем детей
     for child in $children; do
         kill_tree "$child"
     done
 
-    # Завершаем основной процесс
-    echo "⏹ Завершение процесса $pid..."
     kill "$pid" 2>/dev/null || true
-    sleep 2
-
-    # Если жив — принудительно
+    sleep 1
     if kill -0 "$pid" 2>/dev/null; then
-        echo "⚠️ Принудительное завершение $pid"
         kill -9 "$pid" 2>/dev/null || true
     fi
 }
 
-echo "🛑 Остановка Roblox..."
+echo "🛑 Остановка всех процессов Wine в префиксе: $WINEPREFIX"
 
-# Способ 1: через PID-файл (создан launch_roblox.sh)
+# 1. Через PID-файл (если есть)
 if [ -f "$PID_FILE" ]; then
     ROBLOX_PID=$(cat "$PID_FILE")
-    if [ -n "$ROBLOX_PID" ] && [ "$ROBLOX_PID" -gt 0 ] 2>/dev/null; then
+    if [ -n "$ROBLOX_PID" ] && kill -0 "$ROBLOX_PID" 2>/dev/null; then
         kill_tree "$ROBLOX_PID"
-        rm -f "$PID_FILE"
-        echo "✅ Roblox остановлен по PID."
-        exit 0
-    else
-        rm -f "$PID_FILE"
     fi
+    rm -f "$PID_FILE"
 fi
 
-# Способ 2: fallback — поиск по имени процесса Wine
-echo "🔍 Поиск процессов Roblox через Wine..."
-WINE_PROCESSES=$(pgrep -f "wine.*Roblox" 2>/dev/null || true)
+# 2. Поиск ВСЕХ процессов, использующих этот WINEPREFIX
+echo "🔍 Поиск процессов по WINEPREFIX..."
+# Wine устанавливает переменную окружения WINEPREFIX для своих процессов
+# Но pgrep не видит env → ищем через /proc/*/environ
+FOUND_PIDS=""
 
-if [ -n "$WINE_PROCESSES" ]; then
-    for pid in $WINE_PROCESSES; do
+for pid in /proc/[0-9]*; do
+    pid_num=$(basename "$pid")
+    if [ -f "$pid/environ" ]; then
+        # Проверяем, содержит ли environ путь к нашему WINEPREFIX
+        if tr '\0' '\n' < "$pid/environ" 2>/dev/null | grep -q "WINEPREFIX=$WINEPREFIX"; then
+            FOUND_PIDS="$FOUND_PIDS $pid_num"
+        fi
+    fi
+done
+
+if [ -n "$FOUND_PIDS" ]; then
+    echo "📦 Найдены процессы Wine: $FOUND_PIDS"
+    for pid in $FOUND_PIDS; do
         kill_tree "$pid"
     done
-    echo "✅ Все процессы Roblox завершены."
 else
-    echo "ℹ️ Roblox не запущен (PID-файл отсутствует, процессы не найдены)."
+    echo "ℹ️ Активные процессы Wine не найдены."
 fi
+
+# 3. Дополнительно: завершаем wine-server для этого префикса
+echo "🔌 Остановка wine-server..."
+WINEDEBUG=-all WINEPREFIX="$WINEPREFIX" wineserver -k 2>/dev/null || true
+sleep 1
+WINEDEBUG=-all WINEPREFIX="$WINEPREFIX" wineserver -k 2>/dev/null || true
+pkill -f wine
+
+echo "✅ Все процессы Wine для Roblox остановлены."
