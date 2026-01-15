@@ -202,6 +202,8 @@ COMMAND_REGISTRY = {
     "altf4": {"type": "system", "combo": "altf4"},
     "altenter": {"type": "system", "combo": "altenter"},
     "desktop": {"type": "system", "combo": "desktop"},
+    "start-stream": {"type": "system", "action": "start_stream"},
+    "stop-stream": {"type": "system", "action": "stop_stream"},
 
     # Управление сессией
     "run": {"type": "session", "action": "start"},
