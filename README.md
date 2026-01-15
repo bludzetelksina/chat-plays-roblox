@@ -36,7 +36,7 @@
 
 1. **Клонируйте репозиторий**
    ```bash
-   git clone https://github.com/bludjetelksina/chat-plays-roblox.git
+   git clone https://github.com/bludzetelksina/chat-plays-roblox.git
    cd chat-plays-roblox
 
    docker build -t chat-plays-roblox docker/
