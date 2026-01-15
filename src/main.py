@@ -227,7 +227,10 @@ COMMAND_REGISTRY = {
     "joingame": {"type": "session", "action": "join"},
     "leavegame": {"type": "session", "action": "leave"},
 
-    # Мышиные команды — обрабатываются отдельно парсером
+    # ... существующие команды ...
+    "wait": {"type": "special"},      # обрабатывается отдельно
+    "type": {"type": "special"},
+    "typeenter": {"type": "special"},
 }
 
 # === Обработка команды ===
@@ -276,6 +279,45 @@ def execute_command(cmd: str, args: list, author: str):
             pass
         return
 
+    # --- Команда !wait <мс> ---
+if cmd == "wait":
+    if args and args[0].isdigit():
+        ms = min(int(args[0]), 5000)  # макс. 5 сек (безопасность)
+        logger.info(f"⏳ Ожидание: {ms} мс")
+        time.sleep(ms / 1000.0)
+    else:
+        logger.warning("⚠️ !wait требует число (мс), макс. 5000")
+    return
+
+# --- Команда !type "текст" ---
+if cmd == "type":
+    if not args:
+        return
+    # Поддержка кавычек: !type "hello world"
+    if len(args) == 1 and args[0].startswith('"') and args[0].endswith('"'):
+        text = args[0][1:-1]
+    else:
+        text = " ".join(args)
+    safe_text = re.sub(r"[^a-zA-Zа-яА-Я0-9\s.,!?@#$%^&*()_+=\-;:'\"<>]", "", text)[:100]
+    if safe_text:
+        logger.info(f"⌨️ Ввод текста: {safe_text}")
+        pyautogui.typewrite(safe_text, interval=0.02)  # имитация печати
+    return
+
+# --- Команда !typeenter "текст" ---
+if cmd == "typeenter":
+    if not args:
+        return
+    if len(args) == 1 and args[0].startswith('"') and args[0].endswith('"'):
+        text = args[0][1:-1]
+    else:
+        text = " ".join(args)
+    safe_text = re.sub(r"[^a-zA-Zа-яА-Я0-9\s.,!?@#$%^&*()_+=\-;:'\"<>]", "", text)[:100]
+    if safe_text:
+        logger.info(f"⌨️+⏎ Ввод и Enter: {safe_text}")
+        pyautogui.typewrite(safe_text, interval=0.02)
+        pyautogui.press("enter")
+    return
     if cmd == "look" and args:
         input_emu.look(args[0].lower())
         return
