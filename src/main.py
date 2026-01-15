@@ -268,7 +268,12 @@ def execute_command(cmd: str, args: list, author: str):
         if action["type"] == "key":
             input_emu.key_press(action["key"])
         elif action["type"] == "system":
-            input_emu.system_key(action["combo"])
+    if action["action"] == "start_stream":
+        subprocess.run(["bash", "-c", "source ../scripts/run_all.sh && start_stream"], cwd="..")
+    elif action["action"] == "stop_stream":
+        subprocess.run(["bash", "-c", "source ../scripts/run_all.sh && stop_stream"], cwd="..")
+    else:
+        input_emu.system_key(action.get("combo", ""))
         elif action["type"] == "session":
             if action["action"] == "start":
                 session_mgr.start_game()
