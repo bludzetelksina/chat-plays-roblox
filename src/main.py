@@ -47,6 +47,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ChatUses")
 
+def handle_stream_command(action: str):
+    try:
+        result = subprocess.run(
+            ["../scripts/stream_control.sh", action],
+            cwd="..",
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        logger.info(f"🎥 Stream {action}: {result.stdout.strip()}")
+    except Exception as e:
+        logger.error(f"Ошибка управления стримом: {e}")
+
 # === Глобальное состояние сессии ===
 class SessionState:
     def __init__(self):
@@ -202,8 +215,11 @@ COMMAND_REGISTRY = {
     "altf4": {"type": "system", "combo": "altf4"},
     "altenter": {"type": "system", "combo": "altenter"},
     "desktop": {"type": "system", "combo": "desktop"},
-    "start-stream": {"type": "system", "action": "start_stream"},
-    "stop-stream": {"type": "system", "action": "stop_stream"},
+
+    # Стрим
+    "start-stream": {"type": "stream", "action": "start"},
+    "stop-stream": {"type": "stream", "action": "stop"},
+    "restart-stream": {"type": "stream", "action": "restart"},
 
     # Управление сессией
     "run": {"type": "session", "action": "start"},
