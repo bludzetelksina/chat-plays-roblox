@@ -1,0 +1,15 @@
+# YouTube Data API v3
+google-api-python-client==2.135.0
+google-auth-oauthlib==1.2.0
+
+# Эмуляция клавиатуры и мыши (работает поверх X11/Wine)
+pyautogui==0.9.54
+
+# Воспроизведение TTS-аудио
+pygame==2.5.2
+
+# Генерация речи (текст → MP3)
+gTTS==2.5.1
+
+# Дополнительно: для отладки или расширений
+requests==2.31.0
