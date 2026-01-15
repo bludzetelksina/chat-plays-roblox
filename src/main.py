@@ -183,10 +183,16 @@ class SessionManager:
         session.is_running = False
         session.current_game_id = None
 
-    def join_game(self, game_id: str):
-        self.start_game()
-        session.current_game_id = game_id
-        logger.info(f"🎮 Присоединение к игре: {game_id}")
+def join_game(self, game_id: str):
+    self.start_game()  # убедитесь, что Wine и Xvfb работают
+    session.current_game_id = game_id
+    
+    # Перезапуск Roblox с новым PlaceId
+    subprocess.run(["../scripts/stop_roblox.sh"], cwd="..")
+    time.sleep(2)
+    subprocess.Popen(["../scripts/launch_roblox.sh", game_id], cwd="..")
+    
+    logger.info(f"🎮 Присоединение к игре: {game_id}")
 
     def leave_game(self):
         session.current_game_id = None
