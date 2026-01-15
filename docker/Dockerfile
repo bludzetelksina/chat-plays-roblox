@@ -56,8 +56,5 @@ ENV HOME=/home/roblox \
 # === 7. Копируем код ===
 COPY --chown=roblox:roblox . /app/
 
-# === 8. Делаем скрипты исполняемыми ===
-RUN chmod +x scripts/run_all.sh
-
 # === Точка входа ===
 ENTRYPOINT ["/app/scripts/run_all.sh"]
