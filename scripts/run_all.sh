@@ -39,6 +39,8 @@ else
     echo "⚠️ RobloxPlayer.exe не найден. Пропуск запуска игры."
 fi
 
+start_stream
+
 # === 4. Подготовка к управлению стримом ===
 STREAM_PID_FILE="$LOGS_DIR/ffmpeg_stream.pid"
 
