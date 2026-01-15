@@ -38,6 +38,14 @@
    ```bash
    git clone https://github.com/bludjetelksina/chat-plays-roblox.git
    cd chat-plays-roblox
+
+   docker build -t chat-plays-roblox docker/
+
+   docker run --rm -it \
+     -v "$(pwd)/assets:/app/assets:ro" \
+     -v "$(pwd)/config:/app/config" \
+     -v "$(pwd)/logs:/app/logs" \
+     chat-plays-roblox
    ```
 2. **Создайте Wine-префикс**
    ```bash
