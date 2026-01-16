@@ -34,7 +34,8 @@ echo "✅ Xvfb запущен на $DISPLAY"
 ffmpeg -f x11grab -video_size 1280x720 -framerate 30 -i "${DISPLAY}.0" -f alsa -i pulse \
     -c:v libx264 -preset ultrafast -pix_fmt yuv420p -b:v 4500k \
     -c:a aac -b:a 128k -ar 44100 \
-    -f flv "rtmp://a.rtmp.youtube.com/live2/tjp4-hbx3-uawe-dgqe-64dp"
+    -f flv "rtmp://a.rtmp.youtube.com/live2/tjp4-hbx3-uawe-dgqe-64dp" \
+     >> "$FFMPEG_LOG" 2>> "$FFMPEG_STREAM_LOG" &
 
 # === 4. Wine prefix ===
 WINEPREFIX="$CONFIG_DIR/wine_prefix"
