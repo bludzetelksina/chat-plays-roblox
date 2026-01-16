@@ -58,4 +58,4 @@ WORKDIR /app
 
 # === Точка входа ===
 ENTRYPOINT ["/usr/local/bin/clean-x11.sh"]
-CMD ["/app/start.sh"]
+CMD ["/app/scripts/run-all.sh"]
