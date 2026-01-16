@@ -105,7 +105,7 @@ case "${1:-}" in
         ;;
     restart)
         stop_stream
-        sleep 2
+        sleep 1
         start_stream
         ;;
     *)
