@@ -48,14 +48,23 @@ except ImportError as e:
     print(f"❌ Отсутствует зависимость: {e}")
 
 # === Конфигурация ===
-CONFIG_PATH = Path("config/chat_uses.json")
-LOGS_DIR = Path("logs")
-ASSETS_DIR = Path("assets")
+# Use absolute paths or ensure directories exist with correct permissions
+BASE_DIR = Path(__file__).resolve().parent.parent
+CONFIG_PATH = BASE_DIR / "config/chat_uses.json"
+LOGS_DIR = BASE_DIR / "logs"
+ASSETS_DIR = BASE_DIR / "assets"
 TTS_CACHE_DIR = LOGS_DIR / "tts_cache"
 
-# Создаём директории
-LOGS_DIR.mkdir(exist_ok=True)
-TTS_CACHE_DIR.mkdir(exist_ok=True)
+# Создаём директории с явными правами
+try:
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    TTS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+except PermissionError:
+    # Fallback to /tmp if project directory is read-only in this context
+    LOGS_DIR = Path("/tmp/chat_uses_logs")
+    TTS_CACHE_DIR = LOGS_DIR / "tts_cache"
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    TTS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Настройка логгера
 logging.basicConfig(
