@@ -45,9 +45,14 @@ COPY . /app/
 RUN chown -R roblox:roblox /app && \
     chmod +x /app/scripts/*.sh
 
+
+ENV RTMP_URL=""
+RUN if [ -n "$RTMP_URL" ]; then echo "$RTMP_URL" > /app/config/rtmp_url.txt; fi
+
 # Только потом переключаемся
 USER roblox
 ENV HOME=/home/roblox WINEPREFIX=/app/config/wine_prefix
 WORKDIR /app
 
 ENTRYPOINT ["/app/scripts/run_all.sh"]
+
