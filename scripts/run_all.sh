@@ -14,7 +14,6 @@ ROBLOX_ERR_LOG="$LOGS_DIR/roblox_stderr.log"
 
 echo "📝 Логи Roblox готовы: $ROBLOX_LOG, $ROBLOX_ERR_LOG"
 
-
 # === 2. Настройки автоперезапуска стрима ===
 STREAM_RESTART_HOURS=${STREAM_RESTART_HOURS:-6}
 if [ "$STREAM_RESTART_HOURS" -lt 1 ] || [ "$STREAM_RESTART_HOURS" -gt 12 ]; then
@@ -44,6 +43,14 @@ if [ ! -d "$WINEPREFIX" ]; then
     mkdir -p "$WINEPREFIX"
     env WINEPREFIX="$WINEPREFIX" wineboot --init
     sleep 5
+fi
+
+# Установка зависимостей (один раз)
+if [ ! -f "$WINEPREFIX/.winetricks_done" ]; then
+    echo "📦 Установка Winetricks-зависимостей..."
+    export DISPLAY=:0
+    winetricks -q corefonts vcrun2019
+    touch "$WINEPREFIX/.winetricks_done"
 fi
 
 # === 5. Функции управления Roblox (без PID-файла) ===
