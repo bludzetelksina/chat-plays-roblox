@@ -35,23 +35,27 @@ RUN pip3 install --no-cache-dir \
     google-api-python-client \
     google-auth-oauthlib
 
-# === КРИТИЧЕСКИ ВАЖНО: права ===
-RUN useradd --create-home --shell /bin/bash roblox
-
-# После COPY — даём права ОТ ROOT
-COPY . /app/
-
-# КРИТИЧЕСКИ ВАЖНО: chown ДО USER roblox
-RUN chown -R roblox:roblox /app && \
-    chmod +x /app/scripts/*.sh
-
 
 ENV RTMP_URL=""
 RUN if [ -n "$RTMP_URL" ]; then echo "$RTMP_URL" > /app/config/rtmp_url.txt; fi
 
-# Только потом переключаемся
+# === Очистка X11-локов при старте контейнера (выполняется от root) ===
+RUN echo '#!/bin/bash\nrm -f /tmp/.X0-lock /tmp/.X11-unix/X0\nexec "$@"' > /usr/local/bin/clean-x11.sh && \
+    chmod +x /usr/local/bin/clean-x11.sh
+
+# === Создаём пользователя ===
+RUN useradd --create-home --shell /bin/bash roblox
+
+# === Копируем код и даём права ===
+COPY . /app/
+RUN chown -R roblox:roblox /app && \
+    chmod +x /app/scripts/*.sh
+
+# === Переключаемся на пользователя ===
 USER roblox
 ENV HOME=/home/roblox WINEPREFIX=/app/config/wine_prefix
 WORKDIR /app
 
-ENTRYPOINT ["/app/scripts/run_all.sh"]
+# === Точка входа ===
+ENTRYPOINT ["/usr/local/bin/clean-x11.sh"]
+CMD ["/app/scripts/run_all.sh"]
