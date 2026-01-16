@@ -49,6 +49,8 @@ if [ ! -f "$WINEPREFIX/.winetricks_done" ]; then
     touch "$WINEPREFIX/.winetricks_done"
 fi
 
+./start.sh
+
 # === 6. Функции управления Roblox ===
 is_roblox_running() {
     pgrep -f "RobloxPlayerLauncher.*" > /dev/null 2>&1
