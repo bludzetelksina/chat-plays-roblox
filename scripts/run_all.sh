@@ -42,11 +42,11 @@ fi
 # === 5. Функции управления Roblox (без PID-файла) ===
 
 is_roblox_running() {
-    pgrep -f "wine.*RobloxPlayerLauncher.*--app Play" > /dev/null 2>&1
+    pgrep -f "wine.*RobloxPlayer.*--app Play" > /dev/null 2>&1
 }
 
 get_roblox_pid() {
-    pgrep -f "wine.*RobloxPlayerLauncher.*--app Play" 2>/dev/null | head -n1
+    pgrep -f "wine.*RobloxPlayer.*--app Play" 2>/dev/null | head -n1
 }
 
 start_roblox() {
@@ -55,7 +55,7 @@ start_roblox() {
         return 0
     fi
 
-    ROBLOX_LAUNCHER="$ASSETS_DIR/RobloxPlayerLauncher.exe"
+    ROBLOX_LAUNCHER="$ASSETS_DIR/RobloxPlayer.exe"
     if [ ! -f "$ROBLOX_LAUNCHER" ]; then
         echo "⚠️ RobloxPlayerLauncher.exe не найден. Пропуск запуска."
         return 1
@@ -63,7 +63,7 @@ start_roblox() {
 
     echo "🎮 Запуск Roblox..."
     nohup env WINEPREFIX="$WINEPREFIX" \
-        wine "$ROBLOX_LAUNCHER" --app Play --args "placeId=1" \
+        wine "$ROBLOX_LAUNCHER" --app Play --args "placeId=0" \
         > "$ROBLOX_LOG" 2>"$ROBLOX_ERR_LOG" &
     
     # Ждём, чтобы убедиться, что процесс стартовал
@@ -125,3 +125,4 @@ stop_roblox
 kill $XVFB_PID $FLUXBOX_PID $STREAM_MONITOR_PID 2>/dev/null || true
 
 echo "✅ Все процессы остановлены."
+
