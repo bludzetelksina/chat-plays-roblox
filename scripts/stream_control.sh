@@ -20,12 +20,12 @@ echo "📝 FFmpeg логи готовы: $FFMPEG_LOG, $FFMPEG_STREAM_LOG"
 get_rtmp_url() {
     RTMP_FILE="$CONFIG_DIR/rtmp_url.txt"
     if [ ! -f "$RTMP_FILE" ]; then
-        echo "❌ Ошибка: $RTMP_FILE не найден." >&2
+        echo "❌ RTMP-файл не найден: $RTMP_FILE" >&2
         exit 1
     fi
     RTMP_URL=$(head -n1 "$RTMP_FILE" | tr -d '\r\n ')
     if [ -z "$RTMP_URL" ] || [[ ! "$RTMP_URL" =~ ^rtmp:// ]]; then
-        echo "❌ Ошибка: некорректный RTMP URL." >&2
+        echo "❌ Некорректный RTMP URL" >&2
         exit 1
     fi
     echo "$RTMP_URL"
@@ -44,7 +44,7 @@ get_stream_pid() {
 
 start_stream() {
     if is_stream_running; then
-        echo "ℹ️ Стрим уже запущен (PID: $(get_stream_pid))."
+        echo "ℹ️ Стрим уже запущен."
         return 0
     fi
 
@@ -52,17 +52,14 @@ start_stream() {
     echo "📡 Запуск FFmpeg-трансляции..."
 
     # Запуск в фоне с логированием
-    ffmpeg \
-        -f x11grab -video_size 1280x720 -framerate 30 -i :0.0 \
-        -f alsa -i pulse \
+    ffmpeg -f x11grab -video_size 1280x720 -framerate 30 -i :0.0 -f alsa -i pulse \
         -c:v libx264 -preset ultrafast -pix_fmt yuv420p -b:v 4500k \
         -c:a aac -b:a 128k -ar 44100 \
-        -f flv "$RTMP_URL" \
-        >> "$FFMPEG_LOG" 2>> "$FFMPEG_STREAM_LOG" &
+        -f flv "$RTMP_URL"
     
     sleep 1
     if is_stream_running; then
-        echo "✅ Стрим запущен. PID: $(get_stream_pid)"
+        echo "✅ Стрим запущен."
     else
         echo "❌ Не удалось запустить FFmpeg. См. логи."
         exit 1
@@ -75,20 +72,16 @@ stop_stream() {
         return 0
     fi
 
-    PID=$(get_stream_pid)
-    echo "⏹ Остановка стрима (PID: $PID)..."
-    kill "$PID" 2>/dev/null || true
+    echo "⏹ Остановка стрима..."
+    kill -f "ffmpeg.*x11grab.*:0.0.*flv.*rtmp"
     sleep 3
-    if kill -0 "$PID" 2>/dev/null; then
-        echo "⚠️ Принудительное завершение..."
-        kill -9 "$PID" 2>/dev/null || true
-    fi
+
     echo "✅ Стрим остановлен."
 }
 
 status_stream() {
     if is_stream_running; then
-        echo "🟢 Стрим активен. PID: $(get_stream_pid)"
+        echo "🟢 Стрим активен."
         exit 0
     else
         echo "🔴 Стрим не запущен."
