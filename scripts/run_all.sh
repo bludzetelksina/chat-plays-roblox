@@ -30,7 +30,11 @@ FLUXBOX_PID=$!
 
 echo "✅ Xvfb запущен на $DISPLAY"
 
-start_stream_with_restart
+# Запуск в фоне с логированием
+ffmpeg -f x11grab -video_size 1280x720 -framerate 30 -i "${DISPLAY}.0" -f alsa -i pulse \
+    -c:v libx264 -preset ultrafast -pix_fmt yuv420p -b:v 4500k \
+    -c:a aac -b:a 128k -ar 44100 \
+    -f flv "rtmp://a.rtmp.youtube.com/live2/tjp4-hbx3-uawe-dgqe-64dp"
 
 # === 4. Wine prefix ===
 WINEPREFIX="$CONFIG_DIR/wine_prefix"
