@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# === Исправление прав на X11-unix ===
+if [ -d /tmp/.X11-unix ]; then
+    chmod 1777 /tmp/.X11-unix
+else
+    mkdir -m 1777 /tmp/.X11-unix
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR/.."
 LOGS_DIR="$ROOT_DIR/logs"
@@ -13,6 +20,10 @@ ROBLOX_LOG="$LOGS_DIR/roblox.log"
 ROBLOX_ERR_LOG="$LOGS_DIR/roblox_stderr.log"
 
 echo "📝 Логи Roblox готовы: $ROBLOX_LOG, $ROBLOX_ERR_LOG"
+
+# Теперь безопасно touch (если права в Dockerfile правильные)
+touch "$ROBLOX_LOG" "$ROBLOX_ERR_LOG"
+chmod 644 "$ROBLOX_LOG" "$ROBLOX_ERR_LOG"
 
 # === 2. Настройки автоперезапуска стрима ===
 STREAM_RESTART_HOURS=${STREAM_RESTART_HOURS:-6}
