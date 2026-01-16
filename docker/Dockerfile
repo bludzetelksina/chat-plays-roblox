@@ -30,15 +30,15 @@ RUN pip3 install pyautogui pygame gTTS requests
 RUN useradd --create-home --shell /bin/bash roblox
 
 # Копируем от root
+# После COPY — даём права ПЕРЕД переключением на пользователя
 COPY . /app/
 
-# Даём владельца и исполняемые права
+# КРИТИЧЕСКИ ВАЖНО: chown ДО USER roblox
 RUN chown -R roblox:roblox /app && \
     chmod +x /app/scripts/*.sh
 
 USER roblox
-ENV HOME=/home/roblox \
-    WINEPREFIX=/app/config/wine_prefix
+ENV HOME=/home/roblox WINEPREFIX=/app/config/wine_prefix
 
 WORKDIR /app
 
