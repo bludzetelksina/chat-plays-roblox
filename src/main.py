@@ -281,28 +281,32 @@ def execute_command(cmd: str, args: list, author: str):
         return
 
     # Стандартные команды из реестра
-    if cmd in COMMAND_REGISTRY:
-        action = COMMAND_REGISTRY[cmd]
-        if action["type"] == "key":
-            input_emu.key_press(action["key"])
-        elif action["type"] == "system":
-    if action["action"] == "start_stream":
-        subprocess.run(["bash", "-c", "source ../scripts/run_all.sh && start_stream"], cwd="..")
-    elif action["action"] == "stop_stream":
-        subprocess.run(["bash", "-c", "source ../scripts/run_all.sh && stop_stream"], cwd="..")
-    else:
+if cmd in COMMAND_REGISTRY:
+    action = COMMAND_REGISTRY[cmd]
+    if action["type"] == "key":
+        input_emu.key_press(action["key"])
+    elif action["type"] == "system":
         input_emu.system_key(action.get("combo", ""))
-        elif action["type"] == "session":
-            if action["action"] == "start":
-                session_mgr.start_game()
-            elif action["action"] == "stop":
-                session_mgr.stop_game()
-            elif action["action"] == "join":
-                session_mgr.join_game("default")
-            elif action["action"] == "leave":
-                session_mgr.leave_game()
+    elif action["type"] == "stream":
+        if action["action"] == "start":
+            handle_stream_command("start")
+        elif action["action"] == "stop":
+            handle_stream_command("stop")
+        elif action["action"] == "restart":
+            handle_stream_command("restart")
+        else:
+            logger.warning(f"Неизвестное действие стрима: {action['action']}")
+    elif action["type"] == "session":
+        if action["action"] == "start":
+            session_mgr.start_game()
+        elif action["action"] == "stop":
+            session_mgr.stop_game()
+        elif action["action"] == "join":
+            session_mgr.join_game("default")
+        elif action["action"] == "leave":
+            session_mgr.leave_game()
     else:
-        logger.warning(f"Неизвестная команда: {cmd}")
+        logger.warning(f"Неизвестный тип команды: {action['type']}")
 
 # === Парсинг сообщения ===
 def parse_message(message: str):
