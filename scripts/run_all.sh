@@ -30,8 +30,7 @@ FLUXBOX_PID=$!
 
 echo "✅ Xvfb запущен на $DISPLAY"
 
-start_stream_with_restart &
-STREAM_MONITOR_PID=$!
+start_stream_with_restart
 
 # === 4. Wine prefix ===
 WINEPREFIX="$CONFIG_DIR/wine_prefix"
@@ -49,7 +48,6 @@ if [ ! -f "$WINEPREFIX/.winetricks_done" ]; then
     touch "$WINEPREFIX/.winetricks_done"
 fi
 
-./start.sh
 
 # === 6. Функции управления Roblox ===
 is_roblox_running() {
