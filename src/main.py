@@ -183,16 +183,10 @@ class SessionManager:
         session.is_running = False
         session.current_game_id = None
 
-def join_game(self, game_id: str):
-    self.start_game()  # убедитесь, что Wine и Xvfb работают
-    session.current_game_id = game_id
-    
-    # Перезапуск Roblox с новым PlaceId
-    subprocess.run(["../scripts/stop_roblox.sh"], cwd="..")
-    time.sleep(2)
-    subprocess.Popen(["../scripts/launch_roblox.sh", game_id], cwd="..")
-    
-    logger.info(f"🎮 Присоединение к игре: {game_id}")
+    def join_game(self, game_id: str):
+        self.start_game()
+        session.current_game_id = game_id
+        logger.info(f"🎮 Присоединение к игре: {game_id}")
 
     def leave_game(self):
         session.current_game_id = None
@@ -233,10 +227,7 @@ COMMAND_REGISTRY = {
     "joingame": {"type": "session", "action": "join"},
     "leavegame": {"type": "session", "action": "leave"},
 
-    # ... существующие команды ...
-    "wait": {"type": "special"},      # обрабатывается отдельно
-    "type": {"type": "special"},
-    "typeenter": {"type": "special"},
+    # Мышиные команды — обрабатываются отдельно парсером
 }
 
 # === Обработка команды ===
@@ -285,45 +276,6 @@ def execute_command(cmd: str, args: list, author: str):
             pass
         return
 
-    # --- Команда !wait <мс> ---
-if cmd == "wait":
-    if args and args[0].isdigit():
-        ms = min(int(args[0]), 5000)  # макс. 5 сек (безопасность)
-        logger.info(f"⏳ Ожидание: {ms} мс")
-        time.sleep(ms / 1000.0)
-    else:
-        logger.warning("⚠️ !wait требует число (мс), макс. 5000")
-    return
-
-# --- Команда !type "текст" ---
-if cmd == "type":
-    if not args:
-        return
-    # Поддержка кавычек: !type "hello world"
-    if len(args) == 1 and args[0].startswith('"') and args[0].endswith('"'):
-        text = args[0][1:-1]
-    else:
-        text = " ".join(args)
-    safe_text = re.sub(r"[^a-zA-Zа-яА-Я0-9\s.,!?@#$%^&*()_+=\-;:'\"<>]", "", text)[:100]
-    if safe_text:
-        logger.info(f"⌨️ Ввод текста: {safe_text}")
-        pyautogui.typewrite(safe_text, interval=0.02)  # имитация печати
-    return
-
-# --- Команда !typeenter "текст" ---
-if cmd == "typeenter":
-    if not args:
-        return
-    if len(args) == 1 and args[0].startswith('"') and args[0].endswith('"'):
-        text = args[0][1:-1]
-    else:
-        text = " ".join(args)
-    safe_text = re.sub(r"[^a-zA-Zа-яА-Я0-9\s.,!?@#$%^&*()_+=\-;:'\"<>]", "", text)[:100]
-    if safe_text:
-        logger.info(f"⌨️+⏎ Ввод и Enter: {safe_text}")
-        pyautogui.typewrite(safe_text, interval=0.02)
-        pyautogui.press("enter")
-    return
     if cmd == "look" and args:
         input_emu.look(args[0].lower())
         return
@@ -435,9 +387,9 @@ def main():
     # Основной цикл: мониторинг активности
     try:
         while True:
-            # Автоматическая пауза при бездействии > 10 мин
-            if session.is_running and datetime.now() - session.last_command_time > timedelta(minutes=10):
-                logger.info("💤 Без активности >10 мин — пауза сессии")
+            # Автоматическая пауза при бездействии > 12 часов
+            if session.is_running and datetime.now() - session.last_command_time > timedelta(hours=12):
+                logger.info("💤 Без активности >12 часов — пауза сессии")
                 session_mgr.stop_game()
             time.sleep(30)
     except KeyboardInterrupt:
