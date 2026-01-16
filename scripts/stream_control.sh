@@ -43,6 +43,8 @@ get_stream_pid() {
 # === Команды ===
 
 start_stream() {
+    DISPLAY="${DISPLAY:-:0}"
+
     if is_stream_running; then
         echo "ℹ️ Стрим уже запущен."
         return 0
@@ -52,7 +54,7 @@ start_stream() {
     echo "📡 Запуск FFmpeg-трансляции..."
 
     # Запуск в фоне с логированием
-    ffmpeg -f x11grab -video_size 1280x720 -framerate 30 -i :0.0 -f alsa -i pulse \
+    ffmpeg -f x11grab -video_size 1280x720 -framerate 30 -i "${DISPLAY}.0" -f alsa -i pulse \
         -c:v libx264 -preset ultrafast -pix_fmt yuv420p -b:v 4500k \
         -c:a aac -b:a 128k -ar 44100 \
         -f flv "$RTMP_URL"
