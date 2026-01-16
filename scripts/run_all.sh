@@ -77,15 +77,7 @@ start_roblox() {
     fi
 
     echo "🎮 Запуск Roblox..."
-    if [ -w "$ROBLOX_LOG" ] && [ -w "$ROBLOX_ERR_LOG" ]; then
-        nohup env WINEPREFIX="$WINEPREFIX" \
-            wine "$ROBLOX_LAUNCHER" --app Play --args "placeId=1" \
-            > "$ROBLOX_LOG" 2>"$ROBLOX_ERR_LOG" &
-    else
-        nohup env WINEPREFIX="$WINEPREFIX" \
-            wine "$ROBLOX_LAUNCHER" --app Play --args "placeId=1" \
-            > /dev/null 2>&1 &
-    fi
+    wine "$ROBLOX_LAUNCHER"
 
     sleep 2
     if is_roblox_running; then
@@ -99,9 +91,9 @@ stop_roblox() {
     if ! is_roblox_running; then
         return 0
     fi
-    pkill -f "RobloxPlayerLauncher.*--app Play"
+    pkill -f "RobloxPlayerLauncher.*"
     sleep 3
-    pkill -9 -f "RobloxPlayerLauncher.*--app Play" 2>/dev/null || true
+    pkill -9 -f "RobloxPlayerLauncher.*" 2>/dev/null || true
     echo "⏹ Roblox остановлен."
 }
 
