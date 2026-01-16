@@ -6,6 +6,8 @@ ROOT_DIR="$SCRIPT_DIR/.."
 LOGS_DIR="$ROOT_DIR/logs"
 CONFIG_DIR="$ROOT_DIR/config"
 ASSETS_DIR="$ROOT_DIR/assets"
+$FFMPEG_LOG="$LOGS_DIR/ffmpeg.log"
+FFMPEG_STREAM_LOG="$LOGS_DIR/ffmpeg_stream.log"
 
 # === 1. Гарантируем права на запись ===
 umask 002
@@ -145,3 +147,4 @@ stop_roblox
 kill $XVFB_PID $FLUXBOX_PID $STREAM_MONITOR_PID 2>/dev/null || true
 
 echo "✅ Все процессы остановлены."
+
