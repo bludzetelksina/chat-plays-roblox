@@ -21,11 +21,17 @@ if [ "$STREAM_RESTART_HOURS" -lt 1 ] || [ "$STREAM_RESTART_HOURS" -gt 12 ]; then
 fi
 STREAM_RESTART_INTERVAL=$((STREAM_RESTART_HOURS * 3600))
 
-# === 3. Запуск виртуального дисплея ===
+# === 3. Очистка старых X11-локов и запуск Xvfb ===
+echo "🧹 Очистка старых X11-локов..."
+rm -f /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true
+
 echo "🖥 Запуск Xvfb на DISPLAY=:0..."
-Xvfb :0 -screen 0 1280x720x24 -nolisten tcp -dpi 96 &
+Xvfb :0 -screen 0 1280x720x24 -nolisten tcp -dpi 96 -noreset +extension RANDR &
 XVFB_PID=$!
 export DISPLAY=:0
+
+# Ждём, пока Xvfb инициализируется
+sleep 2
 
 fluxbox >/dev/null 2>&1 &
 FLUXBOX_PID=$!
@@ -125,4 +131,3 @@ stop_roblox
 kill $XVFB_PID $FLUXBOX_PID $STREAM_MONITOR_PID 2>/dev/null || true
 
 echo "✅ Все процессы остановлены."
-
