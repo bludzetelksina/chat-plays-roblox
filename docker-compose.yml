@@ -11,6 +11,7 @@ services:
       - DISPLAY=:0
       - STREAM_RESTART_HOURS=6
       - TZ=Europe/Moscow
+      - RTMP_URL=rtmp://a.rtmp.youtube.com/live2/tjp4-hbx3-uawe-dgqe-64dp
     volumes:
       - ./assets:/app/assets:ro          # RobloxPlayer.exe, RobloxPlayerLauncher.exe
       - ./config:/app/config             # wine_prefix/, rtmp_url.txt, chat_uses.json
