@@ -33,6 +33,8 @@ if [ -z "$DISPLAY" ]; then
     exit 1
 fi
 
+export DISPLAY
+
 echo "🖥 Запуск Xvfb на $DISPLAY..."
 Xvfb "$DISPLAY" -screen 0 1280x720x24 -nolisten tcp -dpi 96 -noreset +extension RANDR &
 XVFB_PID=$!
