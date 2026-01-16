@@ -12,8 +12,6 @@ mkdir -p "$LOGS_DIR" "$CONFIG_DIR"
 ROBLOX_LOG="$LOGS_DIR/roblox.log"
 ROBLOX_ERR_LOG="$LOGS_DIR/roblox_stderr.log"
 
-touch "$ROBLOX_LOG" "$ROBLOX_ERR_LOG"
-chmod 644 "$ROBLOX_LOG" "$ROBLOX_ERR_LOG"
 echo "📝 Логи Roblox готовы: $ROBLOX_LOG, $ROBLOX_ERR_LOG"
 
 # === 2. Настройки автоперезапуска стрима ===
