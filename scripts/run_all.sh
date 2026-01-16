@@ -45,11 +45,11 @@ if [ ! -d "$WINEPREFIX" ]; then
     sleep 5
 fi
 
-# Установка зависимостей (один раз)
+# Установка только corefonts (надёжно)
 if [ ! -f "$WINEPREFIX/.winetricks_done" ]; then
-    echo "📦 Установка Winetricks-зависимостей..."
+    echo "📦 Установка corefonts..."
     export DISPLAY=:0
-    winetricks -q corefonts vcrun2019
+    winetricks -q corefonts
     touch "$WINEPREFIX/.winetricks_done"
 fi
 
