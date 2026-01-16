@@ -19,25 +19,10 @@ STREAM_RESTART_INTERVAL=$((STREAM_RESTART_HOURS * 3600))
 
 echo "$RTMP_URL" > "$CONFIG_DIR/rtmp_url.txt"
 
-# === Генерация уникального DISPLAY ===
-# Ищем свободный номер от 99 до 199
-for try_display in $(seq 99 199); do
-    if [ ! -f "/tmp/.X${try_display}-lock" ]; then
-        export DISPLAY=:$try_display
-        break
-    fi
-done
-
-if [ -z "$DISPLAY" ]; then
-    echo "❌ Не найдено свободного DISPLAY"
-    exit 1
-fi
-
-export DISPLAY
-
-echo "🖥 Запуск Xvfb на $DISPLAY..."
-Xvfb "$DISPLAY" -screen 0 1280x720x24 -nolisten tcp -dpi 96 -noreset +extension RANDR &
+echo "🖥 Запуск Xvfb на DISPLAY=:0 (без UNIX-сокета)..."
+Xvfb :0 -screen 0 1280x720x24 -nolisten tcp -nolisten unix -noreset +extension RANDR &
 XVFB_PID=$!
+export DISPLAY=:0
 sleep 2
 
 fluxbox >/dev/null 2>&1 &
