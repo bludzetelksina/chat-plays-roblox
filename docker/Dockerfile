@@ -27,22 +27,27 @@ RUN apt-get update && \
 RUN locale-gen en_US.UTF-8 ru_RU.UTF-8
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 
-RUN pip3 install pyautogui pygame gTTS requests
+RUN pip3 install --no-cache-dir \
+    pyautogui \
+    pygame \
+    gTTS \
+    requests \
+    google-api-python-client \
+    google-auth-oauthlib
 
 # === КРИТИЧЕСКИ ВАЖНО: права ===
 RUN useradd --create-home --shell /bin/bash roblox
 
-# Копируем от root
-# После COPY — даём права ПЕРЕД переключением на пользователя
+# После COPY — даём права ОТ ROOT
 COPY . /app/
 
 # КРИТИЧЕСКИ ВАЖНО: chown ДО USER roblox
 RUN chown -R roblox:roblox /app && \
     chmod +x /app/scripts/*.sh
 
+# Только потом переключаемся
 USER roblox
 ENV HOME=/home/roblox WINEPREFIX=/app/config/wine_prefix
-
 WORKDIR /app
 
 ENTRYPOINT ["/app/scripts/run_all.sh"]
