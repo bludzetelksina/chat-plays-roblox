@@ -11,6 +11,19 @@ ASSETS_DIR="$ROOT_DIR/assets"
 umask 002
 mkdir -p "$LOGS_DIR" "$CONFIG_DIR"
 
+# === Создание chat_uses.json при первом запуске ===
+CHAT_CONFIG="$CONFIG_DIR/chat_uses.json"
+if [ ! -f "$CHAT_CONFIG" ]; then
+    cat > "$CHAT_CONFIG" <<EOF
+{
+  "youtube_api_key": "YOUR_GOOGLE_API_KEY",
+  "live_chat_id": "YOUR_LIVE_CHAT_ID"
+}
+EOF
+    echo "⚠️ Создан шаблон конфига: $CHAT_CONFIG"
+    echo "   Замените значения на реальные!"
+fi
+
 if [ ! -w "$LOGS_DIR" ]; then
     echo "❌ Нет прав на запись в $LOGS_DIR"
     exit 1
@@ -130,3 +143,4 @@ stop_roblox
 kill $XVFB_PID $FLUXBOX_PID $STREAM_MONITOR_PID 2>/dev/null || true
 
 echo "✅ Все процессы остановлены."
+
