@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  chat-plays-roblox:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: chat-plays-roblox
+    restart: unless-stopped
+    environment:
+      - DISPLAY=:0
+      - STREAM_RESTART_HOURS=6
+      - TZ=Europe/Moscow
+    volumes:
+      - ./assets:/app/assets:ro          # RobloxPlayer.exe, RobloxPlayerLauncher.exe
+      - ./config:/app/config             # wine_prefix/, rtmp_url.txt, chat_uses.json
+      - ./logs:/app/logs                 # логи, PID-файлы
+      - /tmp/.X11-unix:/tmp/.X11-unix    # опционально, если используете хост-X11
+    devices:
+      - /dev/dri:/dev/dri                # опционально, для VA-API (если используется)
+    cap_add:
+      - SYS_PTRACE                       # иногда нужно для Wine
+    security_opt:
+      - seccomp:unconfined               # требуется для Wine в некоторых системах
+    networks:
+      - roblox-net
+
+networks:
+  roblox-net:
+    driver: bridge
