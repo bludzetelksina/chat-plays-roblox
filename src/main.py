@@ -48,7 +48,6 @@ except ImportError as e:
     print(f"❌ Отсутствует зависимость: {e}")
 
 # === Конфигурация ===
-# Use absolute paths or ensure directories exist with correct permissions
 BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_PATH = BASE_DIR / "config/chat_uses.json"
 LOGS_DIR = BASE_DIR / "logs"
@@ -56,15 +55,24 @@ ASSETS_DIR = BASE_DIR / "assets"
 TTS_CACHE_DIR = LOGS_DIR / "tts_cache"
 
 # Создаём директории с явными правами
-try:
-    LOGS_DIR.mkdir(parents=True, exist_ok=True)
-    TTS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-except PermissionError:
-    # Fallback to /tmp if project directory is read-only in this context
-    LOGS_DIR = Path("/tmp/chat_uses_logs")
-    TTS_CACHE_DIR = LOGS_DIR / "tts_cache"
-    LOGS_DIR.mkdir(parents=True, exist_ok=True)
-    TTS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+def setup_directories():
+    global LOGS_DIR, TTS_CACHE_DIR
+    try:
+        # Пытаемся создать в корне проекта
+        LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        TTS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        # Проверяем возможность записи
+        test_file = LOGS_DIR / ".write_test"
+        test_file.touch()
+        test_file.unlink()
+    except (PermissionError, OSError) as e:
+        print(f"⚠️ Ошибка доступа к {LOGS_DIR}: {e}. Используем /tmp")
+        LOGS_DIR = Path("/tmp/chat_uses_logs")
+        TTS_CACHE_DIR = LOGS_DIR / "tts_cache"
+        LOGS_DIR.mkdir(parents=True, exist_ok=True)
+        TTS_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+setup_directories()
 
 # Настройка логгера
 logging.basicConfig(
