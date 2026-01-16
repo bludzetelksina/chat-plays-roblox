@@ -16,8 +16,8 @@ CHAT_CONFIG="$CONFIG_DIR/chat_uses.json"
 if [ ! -f "$CHAT_CONFIG" ]; then
     cat > "$CHAT_CONFIG" <<EOF
 {
-  "youtube_api_key": "YOUR_GOOGLE_API_KEY",
-  "live_chat_id": "YOUR_LIVE_CHAT_ID"
+  "youtube_api_key": "AIzaSyBOQRcZ6mIXVC-vcs0IOZ2wDshhJhCZFos",
+  "live_chat_id": "WzXAfaMF6es"
 }
 EOF
     echo "⚠️ Создан шаблон конфига: $CHAT_CONFIG"
