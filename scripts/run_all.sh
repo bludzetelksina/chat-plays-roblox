@@ -1,13 +1,6 @@
 #!/bin/bash
 set -e
 
-# === Исправление прав на X11-unix ===
-if [ -d /tmp/.X11-unix ]; then
-    chmod 1777 /tmp/.X11-unix
-else
-    mkdir -m 1777 /tmp/.X11-unix
-fi
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR/.."
 LOGS_DIR="$ROOT_DIR/logs"
@@ -37,7 +30,7 @@ echo "🧹 Очистка старых X11-локов..."
 rm -f /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true
 
 echo "🖥 Запуск Xvfb на DISPLAY=:0..."
-Xvfb :0 -screen 0 1280x720x24 -nolisten tcp -dpi 96 -noreset +extension RANDR &
+Xvfb :0 -screen 0 1280x720x24 -nolisten tcp -nolisten unix +extension RANDR &
 XVFB_PID=$!
 export DISPLAY=:0
 
