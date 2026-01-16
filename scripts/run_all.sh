@@ -7,109 +7,104 @@ LOGS_DIR="$ROOT_DIR/logs"
 CONFIG_DIR="$ROOT_DIR/config"
 ASSETS_DIR="$ROOT_DIR/assets"
 
-# === 1. Гарантируем создание логов Roblox ===
+# === 1. Гарантируем права на запись ===
+umask 002
 mkdir -p "$LOGS_DIR" "$CONFIG_DIR"
+
+if [ ! -w "$LOGS_DIR" ]; then
+    echo "❌ Нет прав на запись в $LOGS_DIR"
+    exit 1
+fi
+
 ROBLOX_LOG="$LOGS_DIR/roblox.log"
 ROBLOX_ERR_LOG="$LOGS_DIR/roblox_stderr.log"
+touch "$ROBLOX_LOG" "$ROBLOX_ERR_LOG"
+chmod 664 "$ROBLOX_LOG" "$ROBLOX_ERR_LOG"
+echo "📝 Логи готовы: $ROBLOX_LOG"
 
-echo "📝 Логи Roblox готовы: $ROBLOX_LOG, $ROBLOX_ERR_LOG"
-
-# === 2. Настройки автоперезапуска стрима ===
+# === 2. Настройки стрима ===
 STREAM_RESTART_HOURS=${STREAM_RESTART_HOURS:-6}
 if [ "$STREAM_RESTART_HOURS" -lt 1 ] || [ "$STREAM_RESTART_HOURS" -gt 12 ]; then
     STREAM_RESTART_HOURS=6
 fi
 STREAM_RESTART_INTERVAL=$((STREAM_RESTART_HOURS * 3600))
 
-# === 3. Очистка старых X11-локов и запуск Xvfb ===
-echo "🧹 Очистка старых X11-локов..."
-rm -f /tmp/.X0-lock /tmp/.X11-unix/X0 2>/dev/null || true
-
-echo "🖥 Запуск Xvfb на DISPLAY=:0..."
-Xvfb :0 -screen 0 1280x720x24 -nolisten tcp -nolisten unix +extension RANDR &
+# === 3. Запуск Xvfb ===
+echo "🖥 Запуск Xvfb..."
+Xvfb :0 -screen 0 1280x720x24 -nolisten tcp -dpi 96 -noreset +extension RANDR &
 XVFB_PID=$!
 export DISPLAY=:0
-
-# Ждём, пока Xvfb инициализируется
 sleep 2
 
 fluxbox >/dev/null 2>&1 &
 FLUXBOX_PID=$!
 
-# === 4. Инициализация Wine ===
+# === 4. Wine prefix ===
 WINEPREFIX="$CONFIG_DIR/wine_prefix"
 if [ ! -d "$WINEPREFIX" ]; then
-    echo "🍷 Инициализация Wine prefix..."
+    echo "🍷 Инициализация Wine..."
     mkdir -p "$WINEPREFIX"
     env WINEPREFIX="$WINEPREFIX" wineboot --init
     sleep 5
 fi
 
-# Установка только corefonts (надёжно)
+# === 5. Winetricks (только corefonts) ===
 if [ ! -f "$WINEPREFIX/.winetricks_done" ]; then
     echo "📦 Установка corefonts..."
-    export DISPLAY=:0
     winetricks -q corefonts
     touch "$WINEPREFIX/.winetricks_done"
 fi
 
-# === 5. Функции управления Roblox (без PID-файла) ===
-
+# === 6. Функции управления Roblox ===
 is_roblox_running() {
-    pgrep -f "wine.*RobloxPlayer.*--app Play" > /dev/null 2>&1
-}
-
-get_roblox_pid() {
-    pgrep -f "wine.*RobloxPlayer.*--app Play" 2>/dev/null | head -n1
+    pgrep -f "RobloxPlayerLauncher.*--app Play" > /dev/null 2>&1
 }
 
 start_roblox() {
     if is_roblox_running; then
-        echo "ℹ️ Roblox уже запущен (PID: $(get_roblox_pid))."
+        echo "ℹ️ Roblox уже запущен."
         return 0
     fi
 
-    ROBLOX_LAUNCHER="$ASSETS_DIR/RobloxPlayer.exe"
+    ROBLOX_LAUNCHER="$ASSETS_DIR/RobloxPlayerLauncher.exe"
     if [ ! -f "$ROBLOX_LAUNCHER" ]; then
-        echo "⚠️ RobloxPlayerLauncher.exe не найден. Пропуск запуска."
+        echo "⚠️ RobloxPlayerLauncher.exe не найден."
         return 1
     fi
 
     echo "🎮 Запуск Roblox..."
-    nohup env WINEPREFIX="$WINEPREFIX" \
-        wine "$ROBLOX_LAUNCHER" --app Play --args "placeId=0" \
-        > "$ROBLOX_LOG" 2>"$ROBLOX_ERR_LOG" &
-    
-    # Ждём, чтобы убедиться, что процесс стартовал
+    if [ -w "$ROBLOX_LOG" ] && [ -w "$ROBLOX_ERR_LOG" ]; then
+        nohup env WINEPREFIX="$WINEPREFIX" \
+            wine "$ROBLOX_LAUNCHER" --app Play --args "placeId=1" \
+            > "$ROBLOX_LOG" 2>"$ROBLOX_ERR_LOG" &
+    else
+        nohup env WINEPREFIX="$WINEPREFIX" \
+            wine "$ROBLOX_LAUNCHER" --app Play --args "placeId=1" \
+            > /dev/null 2>&1 &
+    fi
+
     sleep 2
     if is_roblox_running; then
-        echo "✅ Roblox запущен. PID: $(get_roblox_pid)"
+        echo "✅ Roblox запущен."
     else
-        echo "❌ Не удалось запустить Roblox. См. логи."
+        echo "❌ Roblox не запустился. См. $ROBLOX_ERR_LOG"
     fi
 }
 
 stop_roblox() {
     if ! is_roblox_running; then
-        echo "ℹ️ Roblox не запущен."
         return 0
     fi
-
-    PID=$(get_roblox_pid)
-    echo "⏹ Остановка Roblox (PID: $PID)..."
-    kill "$PID" 2>/dev/null || true
+    pkill -f "RobloxPlayerLauncher.*--app Play"
     sleep 3
-    if kill -0 "$PID" 2>/dev/null; then
-        echo "⚠️ Принудительное завершение..."
-        kill -9 "$PID" 2>/dev/null || true
-    fi
-    echo "✅ Roblox остановлен."
+    pkill -9 -f "RobloxPlayerLauncher.*--app Play" 2>/dev/null || true
+    echo "⏹ Roblox остановлен."
 }
 
-# === 6. Запуск Roblox (если файл существует) ===
+# === 7. Запуск Roblox ===
 start_roblox
 
-# === 7. Фоновый монитор перезапуска стрима ===
+# === 8. Монитор перезапуска стрима ===
 start_stream_with_restart() {
     while true; do
         "$SCRIPT_DIR/stream_control.sh" start
@@ -122,11 +117,11 @@ start_stream_with_restart() {
 start_stream_with_restart &
 STREAM_MONITOR_PID=$!
 
-# === 8. Запуск чат-бота ===
+# === 9. Основной цикл: запуск чат-бота ===
 echo "🤖 Запуск Chat Uses: Roblox Edition..."
 python3 "$ROOT_DIR/src/main.py"
 
-# === 9. Очистка при завершении ===
+# === 10. Очистка при завершении ===
 echo "🧹 Завершение всех процессов..."
 
 # Остановка стрима
