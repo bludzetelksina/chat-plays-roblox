@@ -24,9 +24,6 @@ RUN apt-get update && \
     apt-get install -y --install-recommends wine wine32 winetricks && \
     rm -rf /var/lib/apt/lists/*
 
-# Установка winetricks и базовых компонентов
-RUN winetricks -q corefonts vcrun2019
-
 RUN locale-gen en_US.UTF-8 ru_RU.UTF-8
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US:en LC_ALL=en_US.UTF-8
 
@@ -54,4 +51,3 @@ ENV HOME=/home/roblox WINEPREFIX=/app/config/wine_prefix
 WORKDIR /app
 
 ENTRYPOINT ["/app/scripts/run_all.sh"]
-
