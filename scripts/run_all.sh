@@ -52,6 +52,16 @@ is_roblox_running() {
 }
 
 start_roblox() {
+    echo "🤖 Запуск Chat Uses: Roblox Edition..."
+    python3 "$ROOT_DIR/src/main.py"
+
+    sleep 2
+
+    start_stream_with_restart &
+    STREAM_MONITOR_PID=$!
+
+    sleep 30
+
     if is_roblox_running; then
         echo "ℹ️ Roblox уже запущен."
         return 0
@@ -97,12 +107,8 @@ start_stream_with_restart() {
     done
 }
 
-start_stream_with_restart &
-STREAM_MONITOR_PID=$!
-
 # === 9. Основной цикл: запуск чат-бота ===
-echo "🤖 Запуск Chat Uses: Roblox Edition..."
-python3 "$ROOT_DIR/src/main.py"
+
 
 # === 10. Очистка при завершении ===
 echo "🧹 Завершение всех процессов..."
