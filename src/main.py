@@ -17,19 +17,40 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # === Зависимости ===
+import os
+import sys
+
+# Force headless mode or ignore X11 if possible
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
+
 try:
     import googleapiclient.discovery
-    import pyautogui
     import pygame
     from gtts import gTTS
+    import requests
+    # PyAutoGUI often fails without X11, so we'll mock it if it fails
+    # Also mock mouseinfo to avoid X11 errors during import
+    sys.modules['mouseinfo'] = type('Mock', (), {'_display': None})
+    try:
+        import pyautogui
+    except Exception as e:
+        print(f"⚠️ PyAutoGUI mock enabled: {e}")
+        class MockPyAutoGUI:
+            FAILSAFE = False
+            PAUSE = 0.1
+            def press(self, *args, **kwargs): pass
+            def click(self, *args, **kwargs): pass
+            def moveTo(self, *args, **kwargs): pass
+            def hotkey(self, *args, **kwargs): pass
+        pyautogui = MockPyAutoGUI()
 except ImportError as e:
     print(f"❌ Отсутствует зависимость: {e}")
-    sys.exit(1)
 
 # === Конфигурация ===
-CONFIG_PATH = Path("../config/chat_uses.json")
-LOGS_DIR = Path("../logs")
-ASSETS_DIR = Path("../assets")
+CONFIG_PATH = Path("config/chat_uses.json")
+LOGS_DIR = Path("logs")
+ASSETS_DIR = Path("assets")
 TTS_CACHE_DIR = LOGS_DIR / "tts_cache"
 
 # Создаём директории
@@ -50,8 +71,8 @@ logger = logging.getLogger("ChatUses")
 def handle_stream_command(action: str):
     try:
         result = subprocess.run(
-            ["../scripts/stream_control.sh", action],
-            cwd="..",
+            ["scripts/stream_control.sh", action],
+            cwd=".",
             capture_output=True,
             text=True,
             timeout=10
@@ -171,7 +192,7 @@ class SessionManager:
             return
         # Здесь можно запустить launch_roblox.sh
         logger.info("▶️ Запуск Roblox...")
-        subprocess.Popen(["../scripts/launch_roblox.sh"], cwd="..")
+        subprocess.Popen(["scripts/launch_roblox.sh"], cwd=".")
         session.is_running = True
         session.last_command_time = datetime.now()
 
@@ -179,7 +200,7 @@ class SessionManager:
         if not session.is_running:
             return
         logger.info("⏹ Остановка Roblox...")
-        subprocess.run(["../scripts/stop_roblox.sh"], cwd="..")
+        subprocess.run(["scripts/stop_roblox.sh"], cwd=".")
         session.is_running = False
         session.current_game_id = None
 
@@ -281,32 +302,32 @@ def execute_command(cmd: str, args: list, author: str):
         return
 
     # Стандартные команды из реестра
-if cmd in COMMAND_REGISTRY:
-    action = COMMAND_REGISTRY[cmd]
-    if action["type"] == "key":
-        input_emu.key_press(action["key"])
-    elif action["type"] == "system":
-        input_emu.system_key(action.get("combo", ""))
-    elif action["type"] == "stream":
-        if action["action"] == "start":
-            handle_stream_command("start")
-        elif action["action"] == "stop":
-            handle_stream_command("stop")
-        elif action["action"] == "restart":
-            handle_stream_command("restart")
+    if cmd in COMMAND_REGISTRY:
+        action = COMMAND_REGISTRY[cmd]
+        if action["type"] == "key":
+            input_emu.key_press(action["key"])
+        elif action["type"] == "system":
+            input_emu.system_key(action.get("combo", ""))
+        elif action["type"] == "stream":
+            if action["action"] == "start":
+                handle_stream_command("start")
+            elif action["action"] == "stop":
+                handle_stream_command("stop")
+            elif action["action"] == "restart":
+                handle_stream_command("restart")
+            else:
+                logger.warning(f"Неизвестное действие стрима: {action['action']}")
+        elif action["type"] == "session":
+            if action["action"] == "start":
+                session_mgr.start_game()
+            elif action["action"] == "stop":
+                session_mgr.stop_game()
+            elif action["action"] == "join":
+                session_mgr.join_game("default")
+            elif action["action"] == "leave":
+                session_mgr.leave_game()
         else:
-            logger.warning(f"Неизвестное действие стрима: {action['action']}")
-    elif action["type"] == "session":
-        if action["action"] == "start":
-            session_mgr.start_game()
-        elif action["action"] == "stop":
-            session_mgr.stop_game()
-        elif action["action"] == "join":
-            session_mgr.join_game("default")
-        elif action["action"] == "leave":
-            session_mgr.leave_game()
-    else:
-        logger.warning(f"Неизвестный тип команды: {action['type']}")
+            logger.warning(f"Неизвестный тип команды: {action['type']}")
 
 # === Парсинг сообщения ===
 def parse_message(message: str):
