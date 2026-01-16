@@ -9,31 +9,6 @@ ASSETS_DIR="$ROOT_DIR/assets"
 
 # === 1. Гарантируем права на запись ===
 umask 002
-mkdir -p "$LOGS_DIR" "$CONFIG_DIR"
-
-# === Создание chat_uses.json при первом запуске ===
-CHAT_CONFIG="$CONFIG_DIR/chat_uses.json"
-if [ ! -f "$CHAT_CONFIG" ]; then
-    cat > "$CHAT_CONFIG" <<EOF
-{
-  "youtube_api_key": "AIzaSyBOQRcZ6mIXVC-vcs0IOZ2wDshhJhCZFos",
-  "live_chat_id": "WzXAfaMF6es"
-}
-EOF
-    echo "⚠️ Создан шаблон конфига: $CHAT_CONFIG"
-    echo "   Замените значения на реальные!"
-fi
-
-if [ ! -w "$LOGS_DIR" ]; then
-    echo "❌ Нет прав на запись в $LOGS_DIR"
-    exit 1
-fi
-
-ROBLOX_LOG="$LOGS_DIR/roblox.log"
-ROBLOX_ERR_LOG="$LOGS_DIR/roblox_stderr.log"
-touch "$ROBLOX_LOG" "$ROBLOX_ERR_LOG"
-chmod 664 "$ROBLOX_LOG" "$ROBLOX_ERR_LOG"
-echo "📝 Логи готовы: $ROBLOX_LOG"
 
 # === 2. Настройки стрима ===
 STREAM_RESTART_HOURS=${STREAM_RESTART_HOURS:-6}
@@ -42,9 +17,7 @@ if [ "$STREAM_RESTART_HOURS" -lt 1 ] || [ "$STREAM_RESTART_HOURS" -gt 12 ]; then
 fi
 STREAM_RESTART_INTERVAL=$((STREAM_RESTART_HOURS * 3600))
 
-if [ -n "$RTMP_URL" ] && [ ! -f "$CONFIG_DIR/rtmp_url.txt" ]; then
-    echo "$RTMP_URL" > "$CONFIG_DIR/rtmp_url.txt"
-fi
+echo "$RTMP_URL" > "$CONFIG_DIR/rtmp_url.txt"
 
 # === 3. Запуск Xvfb ===
 echo "🖥 Запуск Xvfb..."
@@ -143,4 +116,3 @@ stop_roblox
 kill $XVFB_PID $FLUXBOX_PID $STREAM_MONITOR_PID 2>/dev/null || true
 
 echo "✅ Все процессы остановлены."
-
