@@ -30,6 +30,9 @@ FLUXBOX_PID=$!
 
 echo "✅ Xvfb запущен на $DISPLAY"
 
+start_stream_with_restart &
+STREAM_MONITOR_PID=$!
+
 # === 4. Wine prefix ===
 WINEPREFIX="$CONFIG_DIR/wine_prefix"
 if [ ! -d "$WINEPREFIX" ]; then
@@ -56,11 +59,6 @@ start_roblox() {
     python3 "$ROOT_DIR/src/main.py"
 
     sleep 2
-
-    start_stream_with_restart &
-    STREAM_MONITOR_PID=$!
-
-    sleep 30
 
     if is_roblox_running; then
         echo "ℹ️ Roblox уже запущен."
