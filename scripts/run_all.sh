@@ -71,7 +71,6 @@ start_roblox() {
         return 1
     fi
 
-    ./start.sh
 
     echo "🎮 Запуск Roblox..."
     wine "$ROBLOX_LAUNCHER"
