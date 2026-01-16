@@ -14,8 +14,6 @@ ROBLOX_ERR_LOG="$LOGS_DIR/roblox_stderr.log"
 
 echo "📝 Логи Roblox готовы: $ROBLOX_LOG, $ROBLOX_ERR_LOG"
 
-# Теперь безопасно touch (если права в Dockerfile правильные)
-chmod 644 "$ROBLOX_LOG" "$ROBLOX_ERR_LOG"
 
 # === 2. Настройки автоперезапуска стрима ===
 STREAM_RESTART_HOURS=${STREAM_RESTART_HOURS:-6}
