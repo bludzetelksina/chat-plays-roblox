@@ -17,35 +17,41 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # === Зависимости ===
-import os
-import sys
 
 # Force headless mode or ignore X11 if possible
 os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
+# Initialize globals to avoid unbound errors
+# Using typing for better LSP support
+from typing import Any, Optional, Union
+import googleapiclient.discovery
+import pygame
+from gtts import gTTS
+import requests
+
+import types
+pyautogui: Any = None
+
+# Also mock mouseinfo to avoid X11 errors during import
+mock_mouseinfo = types.ModuleType("mouseinfo")
+mock_mouseinfo._display = None  # type: ignore
+sys.modules['mouseinfo'] = mock_mouseinfo
 try:
-    import googleapiclient.discovery
-    import pygame
-    from gtts import gTTS
-    import requests
-    # PyAutoGUI often fails without X11, so we'll mock it if it fails
-    # Also mock mouseinfo to avoid X11 errors during import
-    sys.modules['mouseinfo'] = type('Mock', (), {'_display': None})
-    try:
-        import pyautogui
-    except Exception as e:
-        print(f"⚠️ PyAutoGUI mock enabled: {e}")
-        class MockPyAutoGUI:
-            FAILSAFE = False
-            PAUSE = 0.1
-            def press(self, *args, **kwargs): pass
-            def click(self, *args, **kwargs): pass
-            def moveTo(self, *args, **kwargs): pass
-            def hotkey(self, *args, **kwargs): pass
-        pyautogui = MockPyAutoGUI()
-except ImportError as e:
-    print(f"❌ Отсутствует зависимость: {e}")
+    import pyautogui
+except Exception as e:
+    print(f"⚠️ PyAutoGUI mock enabled: {e}")
+    class MockPyAutoGUI:
+        FAILSAFE = False
+        PAUSE = 0.1
+        def press(self, *args, **kwargs): pass
+        def click(self, *args, **kwargs): pass
+        def moveTo(self, *args, **kwargs): pass
+        def hotkey(self, *args, **kwargs): pass
+    pyautogui = MockPyAutoGUI()
+
+# Ensure dependencies are loaded for other classes
+_ = requests.get # Keep import used
 
 # === Конфигурация ===
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -102,7 +108,7 @@ def handle_stream_command(action: str):
 class SessionState:
     def __init__(self):
         self.is_running = False
-        self.current_game_id = None
+        self.current_game_id: str | None = None
         self.window_mode = "fullscreen"  # или "windowed"
         self.last_command_time = datetime.min
         self.preset = None
