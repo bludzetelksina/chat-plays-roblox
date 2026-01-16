@@ -17,6 +17,9 @@ RUN apt-get update && \
         python3 python3-pip python3-pyaudio locales git dbus-x11 && \
     rm -rf /var/lib/apt/lists/*
 
+# Исправляем права на /tmp/.X11-unix на этапе сборки
+RUN chmod 1777 /tmp/.X11-unix || mkdir -m 1777 /tmp/.X11-unix
+
 RUN apt-get update && \
     apt-get install -y --install-recommends wine wine32 winetricks && \
     rm -rf /var/lib/apt/lists/*
@@ -43,3 +46,4 @@ ENV HOME=/home/roblox WINEPREFIX=/app/config/wine_prefix
 WORKDIR /app
 
 ENTRYPOINT ["/app/scripts/run_all.sh"]
+
