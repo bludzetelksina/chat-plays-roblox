@@ -47,7 +47,7 @@ fi
 
 # === 6. Функции управления Roblox ===
 is_roblox_running() {
-    pgrep -f "RobloxPlayerLauncher.*--app Play" > /dev/null 2>&1
+    pgrep -f "RobloxPlayerLauncher.*" > /dev/null 2>&1
 }
 
 start_roblox() {
@@ -116,3 +116,4 @@ stop_roblox
 kill $XVFB_PID $FLUXBOX_PID $STREAM_MONITOR_PID 2>/dev/null || true
 
 echo "✅ Все процессы остановлены."
+
