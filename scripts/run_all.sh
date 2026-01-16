@@ -29,6 +29,10 @@ if [ "$STREAM_RESTART_HOURS" -lt 1 ] || [ "$STREAM_RESTART_HOURS" -gt 12 ]; then
 fi
 STREAM_RESTART_INTERVAL=$((STREAM_RESTART_HOURS * 3600))
 
+if [ -n "$RTMP_URL" ] && [ ! -f "$CONFIG_DIR/rtmp_url.txt" ]; then
+    echo "$RTMP_URL" > "$CONFIG_DIR/rtmp_url.txt"
+fi
+
 # === 3. Запуск Xvfb ===
 echo "🖥 Запуск Xvfb..."
 Xvfb :0 -screen 0 1280x720x24 -nolisten tcp -dpi 96 -noreset +extension RANDR &
